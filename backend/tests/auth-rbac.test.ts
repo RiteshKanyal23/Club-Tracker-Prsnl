@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { getCookieHeader } from "./helpers/cookies";
 
 const agent = () => request(app);
 
@@ -28,7 +29,7 @@ describe("Auth & RBAC hardening", () => {
       .send({ email: "admin@teamalgebra.local", password: "Password123!" });
     expect(login.status).toBe(200);
     expect(login.body.success).toBe(true);
-    const cookies = login.headers["set-cookie"] || [];
+    const cookies = getCookieHeader(login);
     expect(cookies.join(";")).toContain("accessToken");
 
     const me = await a.get("/api/v1/auth/me").set("Cookie", cookies);
@@ -46,7 +47,7 @@ describe("Auth & RBAC hardening", () => {
       .post("/api/v1/auth/login")
       .send({ email: "member1@teamalgebra.local", password: "Password123!" });
     if (login.status !== 200) return; // seeded user may vary; skip softly
-    const cookies = login.headers["set-cookie"] || [];
+    const cookies = getCookieHeader(login);
     const audit = await a.get("/api/v1/audit").set("Cookie", cookies);
     expect([401, 403]).toContain(audit.status);
     expect(audit.body.success).toBe(false);

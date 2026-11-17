@@ -56,7 +56,6 @@ export function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    console.log("[AdminDashboard] mounting, fetching analytics & dashboard data...");
     (async () => {
       try {
         setChartError(null);
@@ -71,15 +70,11 @@ export function AdminDashboard() {
           achievementsApi.awards(),
           announcementsApi.list(),
         ]);
-        console.log("[AdminDashboard] initial fetch statuses:", results.map((r, i) => ({ i, status: r.status, reason: r.status === "rejected" ? String((r as any).reason) : undefined })));
         const val = (i: number) => results[i].status === "fulfilled" ? (results[i] as any).value?.data : null;
         if (results[0].status === "rejected" && results[1].status === "rejected" && results[2].status === "rejected") {
           setChartError("Failed to load analytics data.");
         }
         const ov = val(0); const wl = val(1); const tr = val(2) || [];
-        console.log("[AdminDashboard] overview:", ov);
-        console.log("[AdminDashboard] workload:", wl);
-        console.log("[AdminDashboard] trends(sample):", Array.isArray(tr) ? tr.slice(0, 3) : tr, "count:", Array.isArray(tr) ? tr.length : 0);
         setOverview(ov); setWorkload(wl); setTrends(tr);
         const p = val(3); setProjects(p?.items || p || []);
         setMeetings(val(4) || []);
@@ -95,16 +90,13 @@ export function AdminDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    console.log("[AdminDashboard] trendRange changed ->", trendRange);
     (async () => {
       try {
         setTrendLoading(true); setTrendError(null);
         const range = trendRange === "last14" ? "last14" : trendRange;
         const res = await analyticsApi.trends(range === "last14" ? { days: 14 } : { range });
-        console.log("[AdminDashboard] trends response:", { range, count: Array.isArray(res.data) ? res.data.length : 0, sample: (res.data || []).slice(0, 2) });
         if (!cancelled) setTrends(res.data || []);
-      } catch (e) {
-        console.error("[AdminDashboard] trends fetch failed", e);
+      } catch {
         if (!cancelled) setTrendError("Failed to load activity & attendance data.");
       } finally {
         if (!cancelled) setTrendLoading(false);
@@ -115,31 +107,20 @@ export function AdminDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    console.log("[AdminDashboard] memberPeriod changed ->", memberPeriod);
     (async () => {
       try {
         setWorkloadLoading(true);
         const range = memberPeriod === "last14" ? "last14" : memberPeriod;
         const res = await analyticsApi.workload(range === "last14" ? { days: 14 } : { range });
-        console.log("[AdminDashboard] workload response:", { range, members: Array.isArray(res.data?.memberLoad) ? res.data.memberLoad.length : 0 });
         if (!cancelled) setWorkload(res.data || null);
-      } catch (e) {
-        console.error("[AdminDashboard] workload fetch failed", e);
+      } catch {
+        // keep previous data; chart section shows empty/error context if needed
       } finally {
         if (!cancelled) setWorkloadLoading(false);
       }
     })();
     return () => { cancelled = true; };
   }, [memberPeriod]);
-
-  useEffect(() => {
-    console.log("[AdminDashboard] chart datasets", {
-      projectStatusData, totalProjects,
-      memberProdCount: memberProdData.length,
-      taskSummary, totalTasksAll, completionPct,
-      trendPoints: trendData.length,
-    });
-  }, [overview, workload, trends, loading, trendLoading, workloadLoading]);
 
   const totals = overview?.totals || {};
   const tasksByStatus = overview?.tasksByStatus || [];

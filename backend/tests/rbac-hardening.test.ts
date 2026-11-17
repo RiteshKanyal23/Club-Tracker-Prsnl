@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { getCookieHeader } from "./helpers/cookies";
 
 async function loginAs(email: string) {
   const a = request(app);
   const login = await a.post("/api/v1/auth/login").send({ email, password: "Password123!" });
   expect(login.status).toBe(200);
-  return { agent: a, cookies: login.headers["set-cookie"] || [] };
+  return { agent: a, cookies: getCookieHeader(login) };
 }
 
 describe("RBAC hardening (negative cases)", () => {

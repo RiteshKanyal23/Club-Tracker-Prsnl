@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { getCookieHeader } from "./helpers/cookies";
 
 describe("OpenAPI docs and audit basics", () => {
   it("serves OpenAPI spec", async () => {
@@ -25,7 +26,7 @@ describe("OpenAPI docs and audit basics", () => {
       .post("/api/v1/auth/login")
       .send({ email: "admin@teamalgebra.local", password: "Password123!" });
     if (login.status !== 200) return;
-    const cookies = login.headers["set-cookie"] || [];
+    const cookies = getCookieHeader(login);
     const audit = await a.get("/api/v1/audit").set("Cookie", cookies);
     expect(audit.status).toBe(200);
     expect(audit.body.success).toBe(true);

@@ -3,6 +3,7 @@ import request from "supertest";
 import path from "path";
 import fs from "fs";
 import { app } from "../src/app";
+import { getCookieHeader } from "./helpers/cookies";
 import { prisma } from "../src/config/database";
 import { uploadDir } from "../src/config/storage";
 
@@ -10,7 +11,7 @@ async function loginAdmin() {
   const a = request(app);
   const login = await a.post("/api/v1/auth/login").send({ email: "admin@teamalgebra.local", password: "Password123!" });
   expect(login.status).toBe(200);
-  return { agent: a, cookies: login.headers["set-cookie"] || [] };
+  return { agent: a, cookies: getCookieHeader(login) };
 }
 
 describe("Workflow documents upload/version/download", () => {
