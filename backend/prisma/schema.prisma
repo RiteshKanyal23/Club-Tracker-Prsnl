@@ -8,11 +8,23 @@ datasource db {
 }
 
 enum RoleName {
+  CEO
   ADMIN
   COORDINATOR
   PROJECT_MANAGER
   TEAM_LEADER
   MEMBER
+}
+
+enum TeamCategory {
+  FRONTEND
+  BACKEND
+  DATABASE
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum TokenType {
@@ -60,6 +72,7 @@ model User {
   passwordHash  String
   name          String
   adminId       String?   @unique
+  ceoSlot       String?   @unique
   role          RoleName  @default(MEMBER)
   isActive      Boolean   @default(true)
   emailVerified Boolean   @default(false)
@@ -81,6 +94,8 @@ model User {
   feedbackGiven     Feedback[] @relation("FeedbackFrom")
   feedbackReceived  Feedback[] @relation("FeedbackTo")
   attendanceMarked  AttendanceRecord[] @relation("AttendanceMarkedBy")
+  managedProject    Project?   @relation("ProjectManager")
+  managedAssignments OrgAssignment[] @relation("AssignmentProjectManager")
 }
 
 model Role {
@@ -153,6 +168,9 @@ model Member {
   memberId        String?             @unique
   phone           String?
   teamName        String?
+  profilePicture  String?
+  joiningDate     DateTime?
+  status          MemberStatus        @default(ACTIVE)
   bio             String?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -164,18 +182,30 @@ model Member {
   leaveRequests   LeaveRequest[]
   leaveBalance    LeaveBalance?
   achievements    MemberAchievement[]
+  orgAssignments  OrgAssignment[]     @relation("MemberOrgAssignments")
+  ledAssignments  OrgAssignment[]     @relation("AssignmentTeamLead")
+  ledTeams        Team[]              @relation("TeamLeader")
 }
 
 model Team {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  leaderId    String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
-  members     TeamMember[]
-  projects    ProjectTeam[]
+  id              String         @id @default(cuid())
+  name            String
+  description     String?
+  leaderId        String?
+  leaderMemberId  String?        @unique
+  category        TeamCategory?
+  projectId       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+  leaderMember    Member?        @relation("TeamLeader", fields: [leaderMemberId], references: [id], onDelete: SetNull)
+  project         Project?       @relation("OrgTeams", fields: [projectId], references: [id], onDelete: SetNull)
+  members         TeamMember[]
+  projects        ProjectTeam[]
+  orgAssignments  OrgAssignment[]
+
+  @@unique([projectId, category])
+  @@index([projectId, category, deletedAt])
 }
 
 model TeamMember {
@@ -195,11 +225,16 @@ model Project {
   name        String
   description String?
   status      ProjectStatus    @default(PLANNING)
+  orgSlot     Int?             @unique
+  managerId   String?          @unique
   deadline    DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
+  manager     User?            @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
   teams       ProjectTeam[]
+  orgTeams    Team[]           @relation("OrgTeams")
+  orgAssignments OrgAssignment[]
   tasks       Task[]
   milestones  Milestone[]
   history     ProjectHistory[]
@@ -226,6 +261,44 @@ model ProjectTeam {
   team      Team    @relation(fields: [teamId], references: [id])
 
   @@id([projectId, teamId])
+}
+
+model Designation {
+  id                  String             @id @default(cuid())
+  key                 String             @unique
+  name                String             @unique
+  description         String?
+  isBuiltIn           Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  assignments         OrgAssignment[]
+  attendanceSnapshots AttendanceRecord[] @relation("AttendanceDesignation")
+}
+
+model OrgAssignment {
+  id               String            @id @default(cuid())
+  memberId         String
+  designationId    String
+  projectId        String?
+  teamId           String?
+  teamLeadId       String?
+  projectManagerId String?
+  status           MemberStatus      @default(ACTIVE)
+  activeKey        String?           @unique
+  effectiveFrom    DateTime          @default(now())
+  effectiveTo      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  member           Member            @relation("MemberOrgAssignments", fields: [memberId], references: [id], onDelete: Cascade)
+  designation      Designation       @relation(fields: [designationId], references: [id])
+  project          Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  team             Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  teamLead         Member?           @relation("AssignmentTeamLead", fields: [teamLeadId], references: [id], onDelete: SetNull)
+  projectManager   User?             @relation("AssignmentProjectManager", fields: [projectManagerId], references: [id], onDelete: SetNull)
+  attendanceRecords AttendanceRecord[] @relation("AttendanceAssignment")
+
+  @@index([memberId, status, effectiveFrom])
+  @@index([projectId, teamId, status])
 }
 
 model Task {
@@ -303,23 +376,37 @@ model MemberSkill {
 }
 
 model AttendanceRecord {
-  id          String           @id @default(cuid())
-  memberId    String
-  date        DateTime
-  sessionName String?          // lab session name
-  status      AttendanceStatus @default(PRESENT)
-  checkIn     DateTime?
-  checkOut    DateTime?
-  notes       String?
-  photoPath   String?
-  markedById  String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  member      Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  markedBy    User?            @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+  id                  String           @id @default(cuid())
+  memberId            String
+  date                DateTime
+  sessionName         String?          // lab session name
+  status              AttendanceStatus @default(PRESENT)
+  checkIn             DateTime?
+  checkOut            DateTime?
+  notes               String?
+  photoPath           String?
+  markedById          String?
+  memberIdText        String?
+  memberName          String?
+  projectName         String?
+  projectManagerName  String?
+  teamName            String?
+  teamLeadName        String?
+  designationName     String?
+  assignmentId        String?
+  designationId       String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  member              Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  markedBy            User?            @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+  assignment          OrgAssignment?   @relation("AttendanceAssignment", fields: [assignmentId], references: [id], onDelete: SetNull)
+  designation         Designation?     @relation("AttendanceDesignation", fields: [designationId], references: [id], onDelete: SetNull)
 
   @@index([memberId, date])
   @@index([date, sessionName])
+  @@index([memberIdText, date])
+  @@index([date, projectName])
+  @@index([date, teamName])
 }
 
 model LeaveRequest {

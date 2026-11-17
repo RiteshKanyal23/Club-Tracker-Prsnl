@@ -15,6 +15,7 @@ import { progressRouter } from "../modules/progress/progress.routes";
 import { projectHistoryRouter } from "../modules/project-history/project-history.routes";
 import { documentsRouter } from "../modules/documents/documents.routes";
 import { attendanceRouter } from "../modules/attendance/attendance.routes";
+import { organizationRouter } from "../modules/organization/organization.routes";
 import { leaveRouter } from "../modules/leave/leave.routes";
 import { meetingsRouter } from "../modules/meetings/meetings.routes";
 import { meetingMinutesRouter } from "../modules/meeting-minutes/meeting-minutes.routes";
@@ -28,10 +29,25 @@ import { achievementsRouter } from "../modules/achievements/achievements.routes"
 import { feedbackRouter } from "../modules/feedback/feedback.routes";
 import { auditRouter } from "../modules/audit/audit.routes";
 import { docsRouter } from "../docs/docs.routes";
+import { prisma } from "../config/database";
 
 export const apiRouter = Router();
 
-apiRouter.get("/health", (_req, res) => res.json({ success: true, data: { status: "ok" }, message: "Healthy", errors: null }));
+apiRouter.get("/health", async (_req, res) => {
+  let database: "ok" | "unavailable" = "ok";
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    database = "unavailable";
+  }
+  const healthy = database === "ok";
+  res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    data: { status: healthy ? "ok" : "degraded", database },
+    message: healthy ? "Healthy" : "Database unavailable",
+    errors: null,
+  });
+});
 apiRouter.use("/", docsRouter);
 
 apiRouter.use("/auth", authRouter);
@@ -50,6 +66,7 @@ apiRouter.use("/progress", progressRouter);
 apiRouter.use("/project-history", projectHistoryRouter);
 apiRouter.use("/documents", documentsRouter);
 apiRouter.use("/attendance", attendanceRouter);
+apiRouter.use("/organization", organizationRouter);
 apiRouter.use("/leave", leaveRouter);
 apiRouter.use("/meetings", meetingsRouter);
 apiRouter.use("/meeting-minutes", meetingMinutesRouter);

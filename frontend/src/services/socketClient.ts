@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../config/api";
 
-const URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
-export const socket = io(URL, { withCredentials: true, autoConnect: false });
+export const socket = io(SOCKET_URL, { withCredentials: true, autoConnect: false });
 
 let joinedUser: string | null = null;
 export function connectSocket(userId?: string) {

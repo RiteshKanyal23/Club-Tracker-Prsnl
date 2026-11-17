@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, UserCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Shield, UserCircle2, ArrowRight, Sparkles, Crown } from "lucide-react";
 
 export function LoginSelection() {
   return (
@@ -11,7 +11,7 @@ export function LoginSelection() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-white/10 text-xs text-cyan mb-4"><Sparkles size={14} /> Team Algebra Club Tracker</div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Choose Your Portal</h1>
-          <p className="text-slate-400 max-w-2xl mx-auto">Select the appropriate secure access portal. Admin and member experiences are separate and role-verified.</p>
+          <p className="text-slate-400 max-w-2xl mx-auto">Select the appropriate secure access portal. CEO, admin, and member experiences are separate and role-verified.</p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
@@ -82,6 +82,21 @@ export function LoginSelection() {
                 <Link to="/member/login" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent to-violet text-white rounded-xl px-4 py-3 font-medium shadow-neon hover:opacity-95 transition">Member Login <ArrowRight size={16} /></Link>
                 <Link to="/member/signup" className="inline-flex items-center justify-center gap-2 glass border border-white/15 text-white rounded-xl px-4 py-3 font-medium hover:bg-white/10 transition">Member Signup</Link>
               </div>
+            </div>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="group glass-strong rounded-3xl border border-cyan/20 p-6 md:p-8 shadow-glass relative overflow-hidden md:col-span-2 lg:col-span-3">
+            <div className="absolute -bottom-24 right-1/4 w-64 h-64 bg-cyan/15 rounded-full blur-3xl" />
+            <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet via-cyan to-accent flex items-center justify-center shadow-neon"><Crown className="text-white" size={26} /></div>
+                <div>
+                  <div className="text-xs px-2 py-1 rounded-full bg-cyan/15 text-cyan border border-cyan/30">Chief Executive Officer</div>
+                  <h2 className="mt-2 text-2xl font-bold text-white">CEO PORTAL</h2>
+                  <p className="text-slate-300">Read-only, organization-wide visibility of hierarchy, attendance, and performance.</p>
+                </div>
+              </div>
+              <Link to="/ceo/login" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet via-cyan to-accent px-5 py-3 font-medium text-white shadow-neon hover:opacity-95 transition">CEO Login <ArrowRight size={16} /></Link>
             </div>
           </motion.div>
         </div>

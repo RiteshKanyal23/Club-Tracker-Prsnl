@@ -2,6 +2,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { app } from "./app";
 import { env } from "./config/environment";
+import { isAllowedOrigin } from "./config/cors";
 import { connectDatabase } from "./config/database";
 import { registerSocketHandlers } from "./sockets";
 import { registerJobs } from "./jobs";
@@ -15,7 +16,13 @@ async function bootstrap() {
   }
 
   const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: env.CORS_ORIGIN.split(",").map((s: string) => s.trim()), credentials: true } });
+  const io = new Server(server, {
+    cors: {
+      origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
+      credentials: true,
+      methods: ["GET", "POST", "OPTIONS"],
+    },
+  });
   registerSocketHandlers(io);
   registerJobs();
 

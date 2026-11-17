@@ -1,5 +1,4 @@
 import { apiRequest } from "../../services/apiClient";
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api/v1";
 
 export const communicationApi = {
   channels: () => apiRequest<any>("/communication/channels"),
@@ -12,7 +11,6 @@ export const communicationApi = {
     const form = new FormData();
     if (data.content) form.append("content", data.content);
     if (data.file) form.append("file", data.file);
-    const res = await fetch(`${BASE}/communication/channels/${id}/messages`, { method: "POST", body: form, credentials: "include" });
-    return res.json();
+    return apiRequest<any>(`/communication/channels/${id}/messages`, { method: "POST", body: form });
   },
 };

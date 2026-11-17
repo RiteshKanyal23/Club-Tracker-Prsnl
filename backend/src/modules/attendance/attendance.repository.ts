@@ -13,14 +13,21 @@ function dayBounds(dateLike?: string | Date) {
 }
 
 export const AttendanceRepository = {
-  async list(query: any) {
+  async list(query: any, scopeWhere: any = {}) {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(200, Math.max(1, Number(query.limit) || 50));
-    const where: any = {};
+    const where: any = { ...scopeWhere };
     if (query.memberId) where.memberId = String(query.memberId);
+    if (query.memberIdText) where.memberIdText = String(query.memberIdText);
     if (query.sessionName) where.sessionName = { contains: String(query.sessionName), mode: "insensitive" };
     if (query.status) where.status = String(query.status).toUpperCase();
-    if (query.teamId) where.member = { teamLinks: { some: { teamId: String(query.teamId) } } };
+    if (query.projectName) where.projectName = String(query.projectName);
+    if (query.teamName) where.teamName = String(query.teamName);
+    if (query.teamLeadName) where.teamLeadName = { contains: String(query.teamLeadName), mode: "insensitive" };
+    if (query.projectManagerName) where.projectManagerName = { contains: String(query.projectManagerName), mode: "insensitive" };
+    if (query.designationName) where.designationName = { contains: String(query.designationName), mode: "insensitive" };
+    if (query.memberName) where.memberName = { contains: String(query.memberName), mode: "insensitive" };
+    if (query.teamId && !query.teamName) where.member = { teamLinks: { some: { teamId: String(query.teamId) } } };
     if (query.from || query.to) {
       where.date = {};
       if (query.from) where.date.gte = new Date(String(query.from));
@@ -51,6 +58,15 @@ export const AttendanceRepository = {
         notes: data.notes ?? null,
         photoPath: data.photoPath ?? null,
         markedById: data.markedById ?? null,
+        assignmentId: data.assignmentId ?? null,
+        designationId: data.designationId ?? null,
+        memberIdText: data.memberIdText ?? null,
+        memberName: data.memberName ?? null,
+        projectName: data.projectName ?? null,
+        projectManagerName: data.projectManagerName ?? null,
+        teamName: data.teamName ?? null,
+        teamLeadName: data.teamLeadName ?? null,
+        designationName: data.designationName ?? null,
       },
       include: includeFull,
     });
@@ -81,12 +97,21 @@ export const AttendanceRepository = {
     const { start, end } = dayBounds(dateStr);
     return prisma.attendanceRecord.findFirst({ where: { memberId, date: { gte: start, lte: end }, sessionName: sessionName ? String(sessionName) : null } as any, include: includeFull });
   },
-  async todaySummary(query: any = {}) {
+  async todaySummary(query: any = {}, scopeWhere: any = {}, memberScopeWhere: any = {}) {
     const { start, end } = dayBounds(query.date);
-    const where: any = { date: { gte: start, lte: end } };
-    if (query.teamId) where.member = { teamLinks: { some: { teamId: String(query.teamId) } } };
+    const where: any = { date: { gte: start, lte: end }, ...scopeWhere };
+    if (query.projectName) where.projectName = String(query.projectName);
+    if (query.teamName) where.teamName = String(query.teamName);
+    if (query.status) where.status = String(query.status).toUpperCase();
+    if (query.teamId && !query.teamName) where.member = { teamLinks: { some: { teamId: String(query.teamId) } } };
     const [totalMembers, grouped] = await Promise.all([
-      prisma.member.count({ where: { user: { isActive: true, deletedAt: null } } }),
+      prisma.orgAssignment.count({
+        where: {
+          status: "ACTIVE",
+          member: { status: "ACTIVE", user: { isActive: true, deletedAt: null } },
+          ...memberScopeWhere,
+        },
+      }),
       prisma.attendanceRecord.groupBy({ by: ["status"], where, _count: { _all: true } }),
     ]);
     const counts: Record<string, number> = { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0 };

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
-import { apiRequest } from "../../services/apiClient";
+import { apiRequest, getErrorMessage } from "../../services/apiClient";
 import { useAuthStore } from "../../store/auth.store";
 
 export function AdminLogin() {
@@ -23,15 +23,15 @@ export function AdminLogin() {
     try {
       const res = await apiRequest<any>("/auth/login", { method: "POST", body: JSON.stringify({ email, password, portal: "admin" }) });
       const user = res.data?.user ?? null;
-      setUser(user);
-      setInitialized(true);
       if (user?.role !== "ADMIN") {
         setError("Admin credentials are required for this portal.");
         return;
       }
+      setUser(user);
+      setInitialized(true);
       navigate("/admin");
-    } catch (err: any) {
-      setError(err.message || "Authentication failed");
+    } catch (err) {
+      setError(getErrorMessage(err, "Authentication failed"));
     } finally {
       setLoading(false);
     }

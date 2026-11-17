@@ -1,7 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 
-function roleHome(role?: string) {
+export function roleHome(role?: string) {
+  if (role === "CEO") return "/ceo";
   if (role === "ADMIN") return "/admin";
   if (role === "COORDINATOR") return "/coordinator";
   if (role === "PROJECT_MANAGER") return "/project-manager";
@@ -17,7 +18,7 @@ export function RoleRoute({ roles }: { roles: string[] }) {
     // prevent cross-portal access; send to role home or appropriate login context
     if (role) return <Navigate to={roleHome(role)} replace />;
     const p = location.pathname;
-    const loginPath = p.startsWith("/admin") ? "/admin/login" : p.startsWith("/member") ? "/member/login" : "/login";
+    const loginPath = p.startsWith("/admin") ? "/admin/login" : p.startsWith("/member") ? "/member/login" : p.startsWith("/ceo") ? "/ceo/login" : "/login";
     return <Navigate to={loginPath} replace />;
   }
   return <Outlet />;

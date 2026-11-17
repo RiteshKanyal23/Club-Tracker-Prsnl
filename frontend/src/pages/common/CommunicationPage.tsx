@@ -5,6 +5,7 @@ import { GlassCard } from "../../components/ui/GlassCard";
 import { communicationApi } from "../../features/communication/api";
 import { socket } from "../../services/socketClient";
 import { useAuthStore } from "../../store/auth.store";
+import { apiOrigin } from "../../config/api";
 
 export function CommunicationPage() {
   const user = useAuthStore((s) => s.user);
@@ -41,7 +42,7 @@ export function CommunicationPage() {
     setActive(ch); socket.emit("join:channel", ch.id); await loadMessages(ch.id);
   };
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1$/, "") || "http://localhost:4000";
+  const baseUrl = apiOrigin();
 
   return <AppLayout>
     <PageHeader title="Team Chat" subtitle="Collaborate in channels, share files, and stay connected in real time." />

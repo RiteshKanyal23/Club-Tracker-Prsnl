@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "COORDINATOR" | "PROJECT_MANAGER" | "TEAM_LEADER" | "MEMBER";
+export type Role = "CEO" | "ADMIN" | "COORDINATOR" | "PROJECT_MANAGER" | "TEAM_LEADER" | "MEMBER";
 
 export interface ApiResponse<T> {
   success: boolean;

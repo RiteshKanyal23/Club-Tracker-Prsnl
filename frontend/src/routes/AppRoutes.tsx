@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { LandingPage } from "../pages/public/LandingPage";
 import { LoginSelection } from "../pages/auth/LoginSelection";
 import { AdminLogin } from "../pages/auth/AdminLogin";
+import { CeoLogin } from "../pages/auth/CeoLogin";
 import { MemberLogin } from "../pages/auth/MemberLogin";
 import { AdminSignup } from "../pages/auth/AdminSignup";
 import { MemberSignup } from "../pages/auth/MemberSignup";
@@ -18,6 +19,7 @@ import { CoordinatorDashboard } from "../pages/coordinator/CoordinatorDashboard"
 import { ProjectManagerDashboard } from "../pages/project-manager/ProjectManagerDashboard";
 import { TeamLeaderDashboard } from "../pages/team-leader/TeamLeaderDashboard";
 import { MemberDashboard } from "../pages/member/MemberDashboard";
+import { CeoDashboard } from "../pages/ceo/CeoDashboard";
 import { ProjectsPage } from "../pages/admin/ProjectsPage";
 import { TeamsPage } from "../pages/admin/TeamsPage";
 import { MembersPage } from "../pages/admin/MembersPage";
@@ -35,6 +37,10 @@ import { AchievementsPage } from "../pages/common/AchievementsPage";
 import { FeedbackPage } from "../pages/common/FeedbackPage";
 import { AuditPage } from "../pages/common/AuditPage";
 import { MemberAttendancePage } from "../pages/member/MemberAttendancePage";
+import { OrganizationPage } from "../pages/common/OrganizationPage";
+import { AttendanceRosterPage } from "../pages/common/AttendanceRosterPage";
+import { AttendanceReportsPage } from "../pages/common/AttendanceReportsPage";
+import { MyProfilePage } from "../pages/common/MyProfilePage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleRoute } from "./RoleRoute";
 
@@ -45,6 +51,7 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginSelection />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/ceo/login" element={<CeoLogin />} />
       <Route path="/admin/signup" element={<AdminSignup />} />
       <Route path="/admin/verify-email" element={<AdminVerifyEmail />} />
       <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
@@ -64,6 +71,10 @@ export function AppRoutes() {
         <Route path="/admin/members" element={<MembersPage />} />
         <Route path="/admin/tasks" element={<TasksPage />} />
         <Route path="/admin/attendance" element={<AttendancePage />} />
+        <Route path="/admin/organization" element={<OrganizationPage />} />
+        <Route path="/admin/attendance/roster" element={<AttendanceRosterPage />} />
+        <Route path="/admin/attendance/reports" element={<AttendanceReportsPage />} />
+        <Route path="/admin/profile" element={<MyProfilePage />} />
         <Route path="/admin/leave" element={<LeavePage />} />
         <Route path="/admin/meetings" element={<MeetingsPage />} />
         <Route path="/admin/documents" element={<DocumentsPage />} />
@@ -85,6 +96,10 @@ export function AppRoutes() {
           <Route path="/coordinator/members" element={<MembersPage />} />
           <Route path="/coordinator/tasks" element={<TasksPage />} />
           <Route path="/coordinator/attendance" element={<AttendancePage />} />
+          <Route path="/coordinator/organization" element={<OrganizationPage />} />
+          <Route path="/coordinator/attendance/roster" element={<AttendanceRosterPage />} />
+          <Route path="/coordinator/attendance/reports" element={<AttendanceReportsPage />} />
+          <Route path="/coordinator/profile" element={<MyProfilePage />} />
           <Route path="/coordinator/leave" element={<LeavePage />} />
           <Route path="/coordinator/meetings" element={<MeetingsPage />} />
           <Route path="/coordinator/documents" element={<DocumentsPage />} />
@@ -101,6 +116,9 @@ export function AppRoutes() {
           <Route path="/project-manager" element={<ProjectManagerDashboard />} />
           <Route path="/project-manager/projects" element={<ProjectsPage />} />
           <Route path="/project-manager/tasks" element={<TasksPage />} />
+          <Route path="/project-manager/attendance/roster" element={<AttendanceRosterPage />} />
+          <Route path="/project-manager/attendance/reports" element={<AttendanceReportsPage />} />
+          <Route path="/project-manager/profile" element={<MyProfilePage />} />
           <Route path="/project-manager/meetings" element={<MeetingsPage />} />
           <Route path="/project-manager/documents" element={<DocumentsPage />} />
           <Route path="/project-manager/communication" element={<CommunicationPage />} />
@@ -115,6 +133,9 @@ export function AppRoutes() {
           <Route path="/team-leader" element={<TeamLeaderDashboard />} />
           <Route path="/team-leader/tasks" element={<TasksPage />} />
           <Route path="/team-leader/attendance" element={<AttendancePage />} />
+          <Route path="/team-leader/attendance/roster" element={<AttendanceRosterPage />} />
+          <Route path="/team-leader/attendance/reports" element={<AttendanceReportsPage />} />
+          <Route path="/team-leader/profile" element={<MyProfilePage />} />
           <Route path="/team-leader/leave" element={<LeavePage />} />
           <Route path="/team-leader/meetings" element={<MeetingsPage />} />
           <Route path="/team-leader/documents" element={<DocumentsPage />} />
@@ -128,11 +149,22 @@ export function AppRoutes() {
         </Route>
       </Route>
 
+      <Route element={<ProtectedRoute />}>
+        <Route element={<RoleRoute roles={["CEO"]} />}>
+          <Route path="/ceo" element={<CeoDashboard />} />
+          <Route path="/ceo/organization" element={<OrganizationPage />} />
+          <Route path="/ceo/attendance/roster" element={<AttendanceRosterPage />} />
+          <Route path="/ceo/attendance/reports" element={<AttendanceReportsPage />} />
+          <Route path="/ceo/profile" element={<MyProfilePage />} />
+        </Route>
+      </Route>
+
       <Route element={<MemberProtectedRoute />}>
         <Route path="/member" element={<MemberDashboard />} />
         <Route path="/member/dashboard" element={<MemberDashboard />} />
         <Route path="/member/tasks" element={<TasksPage />} />
         <Route path="/member/attendance" element={<MemberAttendancePage />} />
+        <Route path="/member/profile" element={<MyProfilePage />} />
         <Route path="/member/leave" element={<LeavePage />} />
         <Route path="/member/meetings" element={<MeetingsPage />} />
         <Route path="/member/documents" element={<DocumentsPage />} />

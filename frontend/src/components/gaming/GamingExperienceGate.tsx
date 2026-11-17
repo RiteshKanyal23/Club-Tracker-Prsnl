@@ -2,15 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CinematicPreloader } from "../preloader/CinematicPreloader";
 import { useAuthStore } from "../../store/auth.store";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api/v1";
+import { API_BASE_URL } from "../../config/api";
 
 async function fetchMeSilently(): Promise<any | null> {
   try {
-    let res = await fetch(`${BASE_URL}/auth/me`, { credentials: "include", headers: { "Content-Type": "application/json" } });
+    let res = await fetch(`${API_BASE_URL}/auth/me`, { credentials: "include", headers: { "Content-Type": "application/json" } });
     if (res.status === 401) {
-      const r = await fetch(`${BASE_URL}/auth/refresh`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (r.ok) res = await fetch(`${BASE_URL}/auth/me`, { credentials: "include", headers: { "Content-Type": "application/json" } });
+      const r = await fetch(`${API_BASE_URL}/auth/refresh`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" } });
+      if (r.ok) res = await fetch(`${API_BASE_URL}/auth/me`, { credentials: "include", headers: { "Content-Type": "application/json" } });
     }
     if (!res.ok) return null;
     const json = await res.json().catch(() => ({}));

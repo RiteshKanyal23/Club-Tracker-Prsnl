@@ -21,6 +21,7 @@ Follows the architecture defined in project specification (`frontend/`, `backend
    - `docker compose -f docker/docker-compose.yml exec backend npx prisma db seed`
 
 > For detailed local setup, see `docs/setup-guide.md`.
+> For Vercel/production setup (API base URL, CORS, environment variables and the same-origin API proxy), see `docs/production-deployment.md`.
 
 ## Default URLs (Docker/dev)
 - Frontend: http://localhost:5173

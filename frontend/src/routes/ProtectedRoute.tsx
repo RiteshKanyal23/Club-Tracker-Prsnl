@@ -21,7 +21,7 @@ export function ProtectedRoute() {
   if (!initialized) return <div className="min-h-screen flex items-center justify-center bg-midnight text-slate-300">Loading session...</div>;
   if (!user) {
     const p = location.pathname;
-    const loginPath = p.startsWith("/admin") ? "/admin/login" : p.startsWith("/member") ? "/member/login" : "/login";
+    const loginPath = p.startsWith("/admin") ? "/admin/login" : p.startsWith("/member") ? "/member/login" : p.startsWith("/ceo") ? "/ceo/login" : "/login";
     return <Navigate to={loginPath} replace />;
   }
   return <Outlet />;

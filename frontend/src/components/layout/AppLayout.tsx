@@ -34,14 +34,19 @@ const ALL_ITEMS: Array<Omit<NavItem, "path"> & { segment: string }> = [
   { key: "achievements", label: "Achievements", icon: Award, segment: "/achievements" },
   { key: "feedback", label: "Feedback", icon: MessageCircleHeart, segment: "/feedback" },
   { key: "audit", label: "Audit", icon: ShieldCheck, segment: "/audit" },
+  { key: "organization", label: "Organization", icon: Users, segment: "/organization" },
+  { key: "attendance-roster", label: "Roster Attendance", icon: CalendarCheck, segment: "/attendance/roster" },
+  { key: "attendance-reports", label: "Attendance Reports", icon: BarChart3, segment: "/attendance/reports" },
+  { key: "profile", label: "My Profile", icon: UserSquare2, segment: "/profile" },
 ];
 
 const ROLE_SEGMENTS: Record<string, Set<string>> = {
+  CEO: new Set(["", "/organization", "/attendance/roster", "/attendance/reports", "/profile"]),
   ADMIN: new Set(ALL_ITEMS.map(i => i.segment)),
   COORDINATOR: new Set(ALL_ITEMS.map(i => i.segment)),
-  PROJECT_MANAGER: new Set(["", "/projects", "/tasks", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback"]),
-  TEAM_LEADER: new Set(["", "/tasks", "/attendance", "/leave", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback"]),
-  MEMBER: new Set(["", "/tasks", "/attendance", "/leave", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback"]),
+  PROJECT_MANAGER: new Set(["", "/projects", "/tasks", "/attendance/roster", "/attendance/reports", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback", "/profile"]),
+  TEAM_LEADER: new Set(["", "/tasks", "/attendance", "/attendance/roster", "/attendance/reports", "/leave", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback", "/profile"]),
+  MEMBER: new Set(["", "/tasks", "/attendance", "/leave", "/meetings", "/documents", "/communication", "/announcements", "/knowledge", "/notifications", "/analytics", "/achievements", "/feedback", "/profile"]),
 };
 
 export function AppLayout({ children }: PropsWithChildren) {
@@ -77,7 +82,8 @@ export function AppLayout({ children }: PropsWithChildren) {
     try { await apiRequest("/auth/logout", { method: "POST" }); } catch {}
     disconnectSocket();
     logout();
-    if (role === "ADMIN") navigate("/admin/login");
+    if (role === "CEO") navigate("/ceo/login");
+    else if (role === "ADMIN") navigate("/admin/login");
     else if (role === "MEMBER") navigate("/member/login");
     else navigate("/login");
   };
@@ -105,7 +111,7 @@ export function AppLayout({ children }: PropsWithChildren) {
             <NavLink
               key={item.key}
               to={item.path}
-              end={item.segment === ""}
+              end
               className={({ isActive }) => cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 relative",
                 collapsed && !mobile ? "justify-center px-2" : "",
@@ -186,7 +192,7 @@ export function AppLayout({ children }: PropsWithChildren) {
                         <div className="px-3 py-2 border-b border-white/10 mb-1">
                           <div className="text-sm text-white font-medium truncate">{user.name}</div>
                           <div className="text-xs text-slate-400 truncate">{user.email}</div>
-                          <div className="text-[10px] text-cyan mt-0.5">{user.role?.replace("_", " ")} �?" Admin User</div>
+                          <div className="text-[10px] text-cyan mt-0.5">{user.role?.replace("_", " ")}</div>
                         </div>
                         <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5" onClick={() => { setProfileOpen(false); navigate(base); }}>
                           <Settings size={16} /> Settings

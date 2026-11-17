@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "../../store/auth.store";
 import { apiRequest } from "../../services/apiClient";
+import { roleHome } from "../../routes/RoleRoute";
 
 export function MemberProtectedRoute() {
   const user = useAuthStore((s) => s.user);
@@ -20,6 +21,6 @@ export function MemberProtectedRoute() {
 
   if (!initialized) return <div className="min-h-screen flex items-center justify-center bg-midnight text-slate-300">Loading session...</div>;
   if (!user) return <Navigate to="/member/login" state={{ from: location }} replace />;
-  if (user.role !== "MEMBER") return <Navigate to={user.role === "ADMIN" ? "/admin" : "/"} replace />;
+  if (user.role !== "MEMBER") return <Navigate to={roleHome(user.role)} replace />;
   return <Outlet />;
 }
