@@ -1,3 +1,4 @@
+
 {
   "name": "team-algebra-club-tracker",
   "private": true,
@@ -8,9 +9,10 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
-    "dev:backend": "npm run dev --workspace tact-backend",
-    "dev:frontend": "npm run dev --workspace tact-frontend",
+    "dev:backend": "npm run dev --workspace=tact-backend",
+    "dev:frontend": "npm run dev --workspace=tact-frontend",
     "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace=tact-backend",
     "lint": "npm run lint --workspaces --if-present",
     "format": "npm run format --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
