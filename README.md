@@ -49,5 +49,7 @@ Follows the architecture defined in project specification (`frontend/`, `backend
 - `docs/setup-guide.md`
 
 ## Phase Status
-- **Phase 0 (Foundations):** scaffolding, Docker setup, base configs, docs skeleton.
-- Subsequent phases will implement core auth/RBAC, modules, realtime, jobs, analytics, and hardening per PRD/TRD.
+- **Foundations:** scaffolding, Docker setup, base configs, docs.
+- **Backend:** auth + RBAC (JWT access/refresh cookies), users/roles/permissions, members & teams, projects/milestones/tasks, attendance (camera check-in), leave, meetings & minutes, action items, documents/versions, announcements, notifications, knowledge base, feedback, achievements, audit log, analytics, OpenAPI docs, Socket.io, cron jobs.
+- **Frontend:** role-based portals (admin/member), login/registration flows, dashboards, module pages, cinematic preloader and gaming-style UI, TanStack Query data layer, Playwright e2e scaffold.
+- **Verification:** `npm run lint` (0 errors), `npm test` (19 backend + 7 frontend tests), `npm run build` (backend + frontend) all pass.

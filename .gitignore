@@ -39,6 +39,7 @@ backend/uploads/*
 # Misc
 *.local
 .cache/
+tmp-*.cjs
 
 # Playwright
 frontend/playwright-report/

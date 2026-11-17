@@ -15,7 +15,7 @@ async function bootstrap() {
   }
 
   const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: env.CORS_ORIGIN.split(",").map(s=>s.trim()), credentials: true } });
+  const io = new Server(server, { cors: { origin: env.CORS_ORIGIN.split(",").map((s: string) => s.trim()), credentials: true } });
   registerSocketHandlers(io);
   registerJobs();
 

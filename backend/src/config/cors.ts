@@ -1,7 +1,7 @@
 import { CorsOptions } from "cors";
 import { env } from "./environment";
 
-const origins = env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
+const origins = env.CORS_ORIGIN.split(",").map((o: string) => o.trim()).filter(Boolean);
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {

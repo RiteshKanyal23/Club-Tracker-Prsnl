@@ -22,7 +22,7 @@ describe("Workflow ops integration (attendance & leave)", () => {
 
   afterAll(async () => {
     try { if (created.leaveId) await prisma.leaveRequest.deleteMany({ where: { id: created.leaveId } }); } catch {}
-    try { if (created.attendanceId) await prisma.attendance.deleteMany({ where: { id: created.attendanceId } }); } catch {}
+    try { if (created.attendanceId) await prisma.attendanceRecord.deleteMany({ where: { id: created.attendanceId } }); } catch {}
     await prisma.$disconnect();
   });
 
