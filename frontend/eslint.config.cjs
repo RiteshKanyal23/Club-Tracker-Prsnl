@@ -1,5 +1,7 @@
 const { FlatCompat } = require("@eslint/eslintrc");
 const js = require("@eslint/js");
+const reactRefreshPkg = require("eslint-plugin-react-refresh");
+const reactRefresh = reactRefreshPkg.default ?? reactRefreshPkg;
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -21,7 +23,7 @@ module.exports = [
   ...compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"),
   {
     files: ["**/*.{ts,tsx}"],
-    plugins: { "react-refresh": require("eslint-plugin-react-refresh") },
+    plugins: { "react-refresh": reactRefresh },
     rules: {
       "react-refresh/only-export-components": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
