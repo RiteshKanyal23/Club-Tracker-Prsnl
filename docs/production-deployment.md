@@ -17,6 +17,42 @@ The fix has three parts:
 2. `vercel.json` proxies those paths to the Express backend using `BACKEND_URL`.
 3. Network failures are translated into actionable error messages.
 
+## Root cause of the Admin Login `405`
+
+The Admin Login button was never the problem. It correctly sends:
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{"email":"...","password":"...","portal":"admin"}
+```
+
+The Express route is also correctly registered as
+`POST /api/v1/auth/login`; password hashing, JWT cookies and the ADMIN role
+check are unchanged. The failure was in the Vercel proxy layer:
+
+1. When the Vercel project root is `frontend/`, the required
+   `frontend/api/[...path].js` function was **not committed**, so there was no
+   proxy function to handle `/api/v1/auth/login`. Vercel fell through to static
+   handling and a `POST` to a static route returned `405`.
+2. When the catch-all proxy did run, it stripped only `/api/proxy` and then
+   unconditionally prepended `/api`. If Vercel routed the original path
+   directly to the function (or the rewrite was bypassed), the backend received
+   `/api/api/v1/auth/login` instead of `/api/v1/auth/login`.
+
+The fix normalizes all of the following to a single path before forwarding:
+
+- `/api/v1/auth/login`
+- `/api/proxy/v1/auth/login`
+- `/api/proxy/api/v1/auth/login`
+- `/api/api/v1/auth/login`
+
+It keeps `/socket.io/...` paths intact, forwards every requested method with
+headers and raw bodies, and returns the backend's real status code and JSON.
+A genuine upstream `405` is still surfaced as `405`; it is not hidden or
+replaced with a fake success.
+
 ## 1. Host the backend
 
 The Express API must be reachable over public HTTPS (Render, Railway, Fly, a VPS,
@@ -69,8 +105,18 @@ backend's `CORS_ORIGIN`, and set `COOKIE_SAME_SITE=none`. Do **not** set a
 `localhost` value in Vercel.
 
 Deploy from the repository root (the root `vercel.json` builds the Vite app and
-includes `api/[...path].js`). A copy of the proxy and config exists under
-`frontend/` for projects configured with `frontend/` as the root.
+includes `api/[...path].js`). If the Vercel project root is `frontend/`, Vercel
+uses `frontend/vercel.json` and `frontend/api/[...path].js` instead. **Both
+proxy copies are committed and kept identical**; a test enforces that, because
+an untracked `frontend/api/[...path].js` is what allowed the deployed `405`.
+
+`BACKEND_URL` must be the backend **origin only** (no `/api` or `/api/v1`
+suffix). Do not put a localhost or private LAN address in Vercel. Do not commit
+`.env` files or backend secrets.
+
+After changing any environment variable or proxy file, create a new deployment
+(or redeploy with cache cleared). `VITE_*` values are compiled into the bundle,
+so an old build will keep its old API URL.
 
 ## 3. Verify
 
@@ -95,9 +141,26 @@ curl -i -X POST https://your-app.vercel.app/api/v1/auth/login \
   -d '{"email":"admin@teamalgebra.local","password":"Password123!","portal":"admin"}'
 ```
 
-Then open the Vercel URL on a phone (mobile data, not the office Wi-Fi) and on a
-desktop browser, sign in through **Admin Portal**, and confirm the admin
-dashboard loads after a refresh (session check via `/auth/me`).
+Expected results:
+
+| Check | Expected |
+|---|---|
+| `GET /api/v1/health` through Vercel | `200` with the same JSON as the backend health endpoint |
+| Valid admin login | `200`, JSON with the admin user, and `Set-Cookie` headers |
+| Wrong admin password | `401` with the backend's real invalid-credentials message |
+| Member login | `200` for a valid member account; no `portal: "admin"` is sent |
+| Any upstream method rejection | The backend's actual status, including a real `405` if one occurs |
+
+If the site still returns `405` after redeploying, check the Vercel **Root
+Directory**. A `frontend/` root must have `frontend/api/[...path].js` in the
+deployed commit; a repository root must have the top-level `api/[...path].js`.
+Then confirm `BACKEND_URL` is set for the Production environment and inspect the
+function logs for `[api-proxy]`.
+
+Finally, open the Vercel URL on a phone (mobile data, not the office Wi-Fi) and
+on a second desktop browser. Sign in through **Admin Portal**, reload the page,
+and confirm the admin dashboard remains (session check via `/auth/me`). Repeat
+with an invalid password and with a member account.
 
 ## Security note
 

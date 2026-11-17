@@ -12,7 +12,11 @@
 
 export const config = { api: { bodyParser: false } };
 
+const API_PREFIX = "/api";
 const PROXY_PREFIX = "/api/proxy";
+const DUPLICATE_API_PREFIX = "/api/api/";
+const SOCKET_PREFIX = "/socket.io";
+
 const HOP_BY_HOP = new Set([
   "connection",
   "keep-alive",
@@ -26,6 +30,43 @@ const HOP_BY_HOP = new Set([
   "content-encoding",
   "host",
 ]);
+
+function stripPrefix(pathname, prefix) {
+  if (pathname === prefix) return "/";
+  return pathname.startsWith(`${prefix}/`) ? pathname.slice(prefix.length) : pathname;
+}
+
+/**
+ * Normalize every path Vercel can hand to this catch-all into the exact path
+ * the Express app mounts. Depending on routing order, the function may see:
+ *   /api/v1/auth/login          (rewrite bypassed; catch-all matched directly)
+ *   /api/proxy/v1/auth/login    (vercel.json rewrite applied)
+ *   /api/proxy/api/v1/auth/login
+ *   /api/api/v1/auth/login      (older, broken deployments)
+ * All must become /api/v1/auth/login. Socket paths are passed through.
+ */
+export function resolveUpstreamPath(rawUrl = "/") {
+  const incoming = new URL(rawUrl || "/", "http://localhost");
+  let pathname = incoming.pathname;
+
+  while (pathname === PROXY_PREFIX || pathname.startsWith(`${PROXY_PREFIX}/`)) {
+    pathname = stripPrefix(pathname, PROXY_PREFIX);
+  }
+  while (pathname.startsWith(DUPLICATE_API_PREFIX)) {
+    pathname = pathname.slice(API_PREFIX.length);
+  }
+
+  const isApiPath = pathname === API_PREFIX || pathname.startsWith(`${API_PREFIX}/`);
+  if (pathname.startsWith(SOCKET_PREFIX) || isApiPath) {
+    return `${pathname}${incoming.search}`;
+  }
+
+  return `${API_PREFIX}${pathname.startsWith("/") ? "" : "/"}${pathname}${incoming.search}`;
+}
+
+export function resolveUpstreamTarget(rawUrl, backendUrl) {
+  return `${String(backendUrl).replace(/\/+$/, "")}${resolveUpstreamPath(rawUrl)}`;
+}
 
 function json(res, status, body) {
   res.status(status);
@@ -52,11 +93,8 @@ export default async function handler(req, res) {
     return json(res, 503, { success: false, message: "BACKEND_URL must be an absolute http(s) URL." });
   }
 
-  const incoming = new URL(req.url || "/", "http://localhost");
-  const rewrittenPath = incoming.pathname.startsWith(PROXY_PREFIX) ? incoming.pathname.slice(PROXY_PREFIX.length) : incoming.pathname;
-  // WebSocket handshakes keep their /socket.io path; REST calls live at /api/...
-  const upstreamPath = rewrittenPath.startsWith("/socket.io") ? rewrittenPath : `/api${rewrittenPath.startsWith("/") ? rewrittenPath : `/${rewrittenPath}`}`;
-  const target = `${backendUrl}${upstreamPath}${incoming.search}`;
+  const method = (req.method || "GET").toUpperCase();
+  const target = resolveUpstreamTarget(req.url || "/", backendUrl);
 
   const headers = {};
   for (const [key, value] of Object.entries(req.headers || {})) {
@@ -67,8 +105,8 @@ export default async function handler(req, res) {
   headers["x-forwarded-proto"] = headers["x-forwarded-proto"] || "https";
 
   try {
-    const body = ["GET", "HEAD"].includes(req.method || "GET") ? undefined : await readBody(req);
-    const upstream = await fetch(target, { method: req.method, headers, body, redirect: "manual" });
+    const body = ["GET", "HEAD"].includes(method) ? undefined : await readBody(req);
+    const upstream = await fetch(target, { method, headers, body, redirect: "manual" });
 
     res.status(upstream.status);
     for (const [key, value] of upstream.headers.entries()) {
